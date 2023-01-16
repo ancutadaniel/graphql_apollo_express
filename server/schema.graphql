@@ -1,0 +1,47 @@
+# adding ! makes a field mandatory field and can not be null
+type Query {
+  job(id: ID!): Job
+  company(id: ID!): Company
+  jobs: [Job!]
+}
+
+type Company {
+  id: ID!
+  name: String!
+  description: String
+  jobs: [Job!]
+}
+
+# company: Company! - this way we represent object association - each job belongs to a company
+# for each job we will call company resolver to get the company object
+type Job {
+  id: ID!
+  title: String!
+  company: Company!
+  description: String
+}
+
+# contains operation that will modify the data - like createJob
+# input type is used to define the input arguments for mutations
+# mutation should return the type that it creates an instance of - in this case Job
+type Mutation {
+  # createJob(input: CreateJobInput): Job
+  createJob(input: CreateJobInput!): Job
+  # deleteJob(id: ID!): Job
+  deleteJob(id: ID!): Job
+  # updateJob(id: ID!, input: UpdateJobInput): Job
+  updateJob(input: UpdateJobInput!): Job
+}
+
+input CreateJobInput {
+  title: String!
+  companyId: ID!
+  description: String
+}
+
+input UpdateJobInput {
+  id: ID!
+  title: String
+  companyId: ID
+  description: String
+}
