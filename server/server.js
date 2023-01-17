@@ -38,9 +38,20 @@ app.post('/login', async (req, res) => {
 // read schema from file and pass it to Apollo Server
 const typeDefs = await readFile('./schema.graphql', 'utf8');
 
+// add context to Apollo Server to pass auth data to resolvers and field resolvers
+// context is a function that returns an object
+// context function receives the request object and the response object as an argument
+const context = async ({ req }) => {
+  // find the user by the id in the JWT token and add it to the context
+  // auth is added by express-jwt if the authorization header is present
+  const user = req.auth && (await User.findById(req.auth.sub));
+  return { user };
+};
+
 const apolloServer = new ApolloServer({
   typeDefs,
   resolvers,
+  context,
 });
 // ===== GraphQL initiate Apollo Server ===== //
 await apolloServer.start();

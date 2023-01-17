@@ -1,5 +1,11 @@
 import { Job, Company } from '../server/db.js';
 
+function rejectIfNotAuthenticated(condition) {
+  if (!condition) {
+    throw new Error('Unauthorized');
+  }
+}
+
 export const resolvers = {
   Query: {
     // receive the parent object and the arguments in the resolver
@@ -21,8 +27,25 @@ export const resolvers = {
   },
 
   Mutation: {
-    createJob: (_root, { input }) => Job.create(input),
-    deleteJob: (_root, { id }) => Job.delete(id),
-    updateJob: (_root, { input }) => Job.update(input),
+    createJob: (_root, args, context) => {
+      const { user } = context;
+      const { input } = args;
+      rejectIfNotAuthenticated(user);
+      return Job.create({ ...input, companyId: user.companyId });
+    },
+    deleteJob: async (_root, { id }, { user }) => {
+      // check if user is logged in before deleting a job and the job belongs to the user company id
+      rejectIfNotAuthenticated(user);
+      const job = await Job.findById(id);
+      rejectIfNotAuthenticated(job.companyId === user.companyId);
+
+      return Job.delete(id);
+    },
+    updateJob: async (_root, { input }, { user }) => {
+      rejectIfNotAuthenticated(user);
+      const job = await Job.findById(input.id);
+      rejectIfNotAuthenticated(job.companyId === user.companyId);
+      return Job.update({ ...input, companyId: user.companyId });
+    },
   },
-};
+}; // end of resolvers
